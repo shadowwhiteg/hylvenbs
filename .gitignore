@@ -1,3 +1,13 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Rede de segurança: segredos e bancos nunca vão para o repositório
+# (market-integrations/.gitignore já cobre, isto é redundância proposital)
+.env
+.env.local
+*.db
+*.db-journal
+node_modules/
+.next/
+.vercel

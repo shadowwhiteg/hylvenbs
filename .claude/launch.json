@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "market-integrations",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:local", "--prefix", "market-integrations"],
+      "port": 3000
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+; systemd unit do app Next.js. Instale em /etc/systemd/system/ e ative com:
+;   sudo systemctl daemon-reload
+;   sudo systemctl enable --now market-integrations
+;
+; O app roda como processo persistente e único — é isso que permite usar
+; SQLite e node-cron. Não escale para múltiplas instâncias: duas cópias
+; escrevendo no mesmo arquivo SQLite corrompem o banco.
+
+[Unit]
+Description=hylvenbs.xyz - Market Integrations (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/hylvenbs/market-integrations
+
+# Segredos e configuração ficam fora do diretório do deploy, para o
+# git pull nunca sobrescrevê-los. Permissões: chmod 600, dono www-data.
+EnvironmentFile=/etc/market-integrations.env
+
+ExecStart=/usr/bin/npm run start:prod
+
+Restart=always
+RestartSec=5
+
+# O banco SQLite vive fora do diretório da aplicação (ver DATABASE_URL),
+# então um deploy limpo nunca o apaga.
+ReadWritePaths=/var/lib/market-integrations
+
+# Endurecimento básico
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=market-integrations
+
+[Install]
+WantedBy=multi-user.target

@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /market-integrations
 
 Sitemap: https://hylvenbs.xyz/sitemap.xml

@@ -15,7 +15,9 @@ RewriteRule ^ https://hylvenbs.xyz%{REQUEST_URI} [L,R=301]
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
-# Página única: qualquer rota cai no index
+# Página única: qualquer rota cai no index.
+# /market-integrations é servido pelo app Next.js (proxy), não pelo index.
+RewriteCond %{REQUEST_URI} !^/market-integrations
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ /index.html [L]

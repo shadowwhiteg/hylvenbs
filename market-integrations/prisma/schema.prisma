@@ -1,0 +1,489 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id                 String                 @id @default(cuid())
+  externalId         String                 @unique
+  sourceUrl          String                 @unique
+  title              String
+  costPrice          Float                  @default(0)
+  description        String                 @default("")
+  pictures           String                 @default("[]")
+  stock              Int?
+  /**
+   * Estoque bruto vindo do Meu Drop (antes do percentual configurado).
+   */
+  sourceStock        Int?
+  videoUrl           String?
+  attributesJson     String                 @default("[]")
+  extraInfoJson      String                 @default("{}")
+  sku                String?
+  categoryPath       String?
+  warranty           String?
+  warningsJson       String                 @default("[]")
+  status             String                 @default("synced")
+  mlItemId           String?
+  mlPermalink        String?
+  shopeeItemId       String?
+  shopeeItemUrl      String?
+  lastSyncedAt       DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  draft              ListingDraft?
+  shopeeDraft        ShopeeListingDraft?
+  kitItems           KitItem[]
+  publishItems       PublishJobItem[]
+  shopeePublishItems ShopeePublishJobItem[]
+  oneClickItems      OneClickJobItem[]
+  stockSnapshot      StockSnapshot?
+  stockChanges       StockChangeLog[]
+}
+
+model ListingDraft {
+  id                    String   @id @default(cuid())
+  productId             String?  @unique
+  product               Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  kitId                 String?  @unique
+  kit                   Kit?     @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  title                 String   @default("")
+  description           String   @default("")
+  price                 Float    @default(0)
+  condition             String   @default("new")
+  buyingMode            String   @default("buy_it_now")
+  listingTypeId         String   @default("gold_pro")
+  categoryId            String   @default("")
+  shippingMode          String   @default("me2")
+  shippingJson          String   @default("{}")
+  freeShipping          Boolean  @default(true)
+  localPickUp           Boolean  @default(false)
+  pictures              String   @default("[]")
+  attributes            String   @default("[]")
+  variations            String   @default("[]")
+  regulatory            String   @default("{}")
+  warrantyType          String   @default("Garantia de fábrica")
+  warrantyTime          String   @default("90 dias")
+  availableQuantity     Int      @default(1)
+  currencyId            String   @default("BRL")
+  videoUrl              String?
+  videoId               String?
+  catalogProductId      String?
+  catalogSuggestionJson String   @default("{}")
+  marginPercentOverride Float?
+  userEditedJson        String   @default("{}")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model ShopeeListingDraft {
+  id             String   @id @default(cuid())
+  productId      String?  @unique
+  product        Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  kitId          String?  @unique
+  kit            Kit?     @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  title          String   @default("")
+  description    String   @default("")
+  price          Float    @default(0)
+  stock          Int      @default(1)
+  condition      String   @default("NEW")
+  categoryId     String   @default("")
+  attributes     String   @default("[]")
+  pictures       String   @default("[]")
+  /**
+   * Cache de {sourceUrl: image_id} já enviados ao media_space da Shopee — evita reenviar imagem a cada publish.
+   */
+  imageIdsJson   String   @default("{}")
+  itemSku        String?
+  brandId        String?
+  brandName      String?
+  weightKg       Float    @default(0.3)
+  dimensionJson  String   @default("{}")
+  logisticsJson  String   @default("[]")
+  daysToShip     Int      @default(2)
+  videoUrl       String?
+  userEditedJson String   @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Kit {
+  id                 String                 @id @default(cuid())
+  title              String
+  costPrice          Float                  @default(0)
+  status             String                 @default("draft_ready")
+  /**
+   * "catalog" (produtos do Meu Drop), "ml_listings" ou "shopee_listings" (anúncios já publicados).
+   */
+  source             String                 @default("catalog")
+  /**
+   * Justificativa da IA quando o kit veio de uma sugestão automática.
+   */
+  aiRationale        String?
+  mlItemId           String?
+  mlPermalink        String?
+  shopeeItemId       String?
+  shopeeItemUrl      String?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  items              KitItem[]
+  draft              ListingDraft?
+  shopeeDraft        ShopeeListingDraft?
+  publishItems       PublishJobItem[]
+  shopeePublishItems ShopeePublishJobItem[]
+}
+
+model KitItem {
+  id              String   @id @default(cuid())
+  kitId           String
+  kit             Kit      @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  /**
+   * Um item vem de um Product local OU de um MlListing/ShopeeListing já publicado — nunca de dois.
+   */
+  productId       String?
+  product         Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  mlListingId     String?
+  shopeeListingId String?
+  quantity        Int      @default(1)
+  /**
+   * Snapshots: o kit continua legível mesmo se a origem sumir do catálogo/marketplace.
+   */
+  titleSnapshot   String   @default("")
+  unitPrice       Float    @default(0)
+  unitCost        Float    @default(0)
+
+  @@unique([kitId, productId])
+  @@unique([kitId, mlListingId])
+  @@unique([kitId, shopeeListingId])
+}
+
+model PublishJob {
+  id         String           @id @default(cuid())
+  status     String           @default("pending")
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  finishedAt DateTime?
+  items      PublishJobItem[]
+}
+
+model PublishJobItem {
+  id        String     @id @default(cuid())
+  jobId     String
+  job       PublishJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product?   @relation(fields: [productId], references: [id], onDelete: SetNull)
+  kitId     String?
+  kit       Kit?       @relation(fields: [kitId], references: [id], onDelete: SetNull)
+  status    String     @default("pending")
+  error     String?
+  mlItemId  String?
+  attempts  Int        @default(0)
+}
+
+model OneClickJob {
+  id          String            @id @default(cuid())
+  marketplace String
+  mode        String            @default("publish")
+  /**
+   * Tipo de anúncio ML enviado ao One Click: gold_special (Clássico) ou gold_pro (Premium).
+   * Ignorado no marketplace Shopee.
+   */
+  listingType String            @default("gold_special")
+  status      String            @default("pending")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  finishedAt  DateTime?
+  items       OneClickJobItem[]
+}
+
+model OneClickJobItem {
+  id            String      @id @default(cuid())
+  jobId         String
+  job           OneClickJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  productId     String?
+  product       Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  sku           String
+  title         String      @default("")
+  price         Float?
+  gtin          String?
+  status        String      @default("pending")
+  error         String?
+  resultItemId  String?
+  resultUrl     String?
+}
+
+model ShopeePublishJob {
+  id         String                 @id @default(cuid())
+  status     String                 @default("pending")
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  finishedAt DateTime?
+  items      ShopeePublishJobItem[]
+}
+
+model ShopeePublishJobItem {
+  id           String           @id @default(cuid())
+  jobId        String
+  job          ShopeePublishJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  productId    String?
+  product      Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
+  kitId        String?
+  kit          Kit?             @relation(fields: [kitId], references: [id], onDelete: SetNull)
+  status       String           @default("pending")
+  error        String?
+  shopeeItemId String?
+  attempts     Int              @default(0)
+}
+
+/**
+ * Fila de "Revisar com IA" em Anúncios Shopee — mesmo padrão de ReviewJob, em lotes pra não travar uma requisição HTTP única por minutos.
+ */
+model ShopeeReviewJob {
+  id         String                @id @default(cuid())
+  status     String                @default("pending")
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+  finishedAt DateTime?
+  items      ShopeeReviewJobItem[]
+}
+
+model ShopeeReviewJobItem {
+  id                String          @id @default(cuid())
+  jobId             String
+  job               ShopeeReviewJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  shopeeListingId   String
+  status            String          @default("pending")
+  titleChanged      Boolean         @default(false)
+  attributesChanged Boolean         @default(false)
+  error             String?
+  attempts          Int             @default(0)
+}
+
+/**
+ * Fila de "Revisar com IA" em Anúncios ML: processa em lotes pra não travar uma requisição HTTP única por minutos (isso já causou timeout 524 no túnel).
+ */
+model ReviewJob {
+  id         String          @id @default(cuid())
+  status     String          @default("pending")
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  finishedAt DateTime?
+  items      ReviewJobItem[]
+}
+
+model ReviewJobItem {
+  id                String    @id @default(cuid())
+  jobId             String
+  job               ReviewJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  mlListingId       String
+  status            String    @default("pending")
+  titleChanged      Boolean   @default(false)
+  attributesChanged Boolean   @default(false)
+  error             String?
+  attempts          Int       @default(0)
+}
+
+model MlToken {
+  id           String   @id @default("default")
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  userId       String?
+  updatedAt    DateTime @updatedAt
+}
+
+model ShopeeToken {
+  id               String   @id @default("default")
+  accessToken      String
+  refreshToken     String
+  shopId           String
+  /**
+   * Access token da Shopee dura ~4h.
+   */
+  expiresAt        DateTime
+  /**
+   * Refresh token da Shopee dura ~30 dias — depois disso exige reconectar do zero.
+   */
+  refreshExpiresAt DateTime
+  updatedAt        DateTime @updatedAt
+}
+
+model SyncRun {
+  id               String    @id @default(cuid())
+  status           String    @default("running")
+  startedAt        DateTime  @default(now())
+  finishedAt       DateTime?
+  createdCount     Int       @default(0)
+  updatedCount     Int       @default(0)
+  unavailableCount Int       @default(0)
+  error            String?
+}
+
+model MlSyncRun {
+  id           String    @id @default(cuid())
+  status       String    @default("running")
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  updatedCount Int       @default(0)
+  skippedCount Int       @default(0)
+  errorCount   Int       @default(0)
+  error        String?
+}
+
+model ShopeeSyncRun {
+  id           String    @id @default(cuid())
+  status       String    @default("running")
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  updatedCount Int       @default(0)
+  skippedCount Int       @default(0)
+  errorCount   Int       @default(0)
+  error        String?
+}
+
+model AppSettings {
+  id                       String   @id @default("default")
+  marginPercent            Float    @default(30)
+  autoSyncMode             String   @default("always")
+  autoPauseWhenUnavailable Boolean  @default(true)
+  ollamaBaseUrl            String   @default("http://127.0.0.1:11434")
+  ollamaModel              String   @default("qwen3.5:4b")
+  /**
+   * Provedor de IA ativo: ollama | openai | openai-compatible | openrouter | google-ai-studio | cursor | claude-code.
+   */
+  aiProvider               String   @default("ollama")
+  /**
+   * Server-only; never expose in API JSON. API key do provedor hospedado ativo.
+   */
+  aiApiKey                 String?
+  /**
+   * Base URL customizada — obrigatória pra openai-compatible; ignorada pelos demais.
+   */
+  aiBaseUrl                String?
+  /**
+   * Nome/ID do modelo pros provedores hospedados (ex.: gpt-4o-mini, gemini-2.0-flash).
+   */
+  aiModel                  String?
+  /**
+   * Binário/comando do CLI local pra cursor/claude-code (ex.: "claude", "cursor-agent").
+   */
+  aiCliCommand             String?
+  /**
+   * Args extras do CLI em JSON (ex.: ["-p"]).
+   */
+  aiCliArgs                String   @default("[]")
+  /**
+   * Limite de tokens de saída por chamada à IA (max_tokens / num_predict).
+   */
+  aiMaxTokens              Int      @default(2048)
+  defaultListingTypeId     String   @default("gold_pro")
+  defaultFreeShipping      Boolean  @default(true)
+  defaultLocalPickUp       Boolean  @default(false)
+  defaultShippingMode      String   @default("me2")
+  defaultWarrantyType      String   @default("Garantia de fábrica")
+  defaultWarrantyTime      String   @default("90 dias")
+  /**
+   * Percentual do estoque do Meu Drop usado no catálogo/anúncios (ex.: 25 = 25%).
+   */
+  catalogStockPercent      Float    @default(100)
+  /**
+   * Server-only; never expose in API JSON. Prefer over ML_CLIENT_SECRET env when set.
+   */
+  mlClientSecret           String?
+  /**
+   * Server-only; never expose in API JSON. Prefer over SHOPEE_PARTNER_KEY env when set.
+   */
+  shopeePartnerKey         String?
+  /**
+   * Peso padrão (kg) aplicado a rascunhos Shopee sem peso definido — a Shopee exige peso pra publicar.
+   */
+  shopeeDefaultWeightKg    Float    @default(0.3)
+  /**
+   * Dias pra despachar (DTS) padrão dos rascunhos Shopee.
+   */
+  shopeeDefaultDaysToShip  Int      @default(2)
+  updatedAt                DateTime @updatedAt
+}
+
+/**
+ * Snapshot local de um anúncio do ML importado via /users/{id}/items/search. Sem FK pra Product/Kit — o match é feito em query por mlItemId.
+ */
+model MlListing {
+  id                String   @id
+  title             String
+  price             Float
+  currencyId        String   @default("BRL")
+  availableQuantity Int      @default(0)
+  soldQuantity      Int      @default(0)
+  status            String
+  listingTypeId     String?
+  categoryId        String?
+  permalink         String?
+  thumbnail         String?
+  catalogListing    Boolean  @default(false)
+  tagsJson          String   @default("[]")
+  /**
+   * Snapshot bruto do array `attributes` do ML (inclui SELLER_SKU, GTIN etc).
+   */
+  attributesJson    String   @default("[]")
+  lastApiSyncAt     DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+/**
+ * Snapshot local de um item Shopee importado via get_item_list + get_item_base_info. Sem FK pra Product/Kit — o match é feito em query por shopeeItemId.
+ */
+model ShopeeListing {
+  id             String   @id
+  title          String
+  price          Float
+  currencyId     String   @default("BRL")
+  stock          Int      @default(0)
+  status         String
+  categoryId     String?
+  itemSku        String?
+  permalink      String?
+  thumbnail      String?
+  /**
+   * Snapshot bruto dos atributos da Shopee (attribute_id/value).
+   */
+  attributesJson String   @default("[]")
+  lastApiSyncAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+/**
+ * Último valor de estoque visto por produto, usado pelo cron de diff a cada 12h.
+ */
+model StockSnapshot {
+  productId   String   @id
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stock       Int?
+  sourceStock Int?
+  updatedAt   DateTime @updatedAt
+}
+
+model StockChangeLog {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productTitle  String
+  previousStock Int?
+  newStock      Int?
+  delta         Int?
+  detectedAt    DateTime @default(now())
+  source        String   @default("cron")
+}
+
+model MeuDropAnnouncement {
+  id          String   @id @default(cuid())
+  contentHash String   @unique
+  text        String
+  capturedAt  DateTime @default(now())
+}
