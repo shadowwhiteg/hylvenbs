@@ -1,0 +1,21 @@
+# Força HTTPS e o domínio canônico https://hylvenbs.xyz/
+RewriteEngine On
+
+# http -> https
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://hylvenbs.xyz%{REQUEST_URI} [L,R=301]
+
+# www.hylvenbs.xyz -> hylvenbs.xyz
+RewriteCond %{HTTP_HOST} ^www\.hylvenbs\.xyz$ [NC]
+RewriteRule ^ https://hylvenbs.xyz%{REQUEST_URI} [L,R=301]
+
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Página única: qualquer rota cai no index
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [L]

@@ -1,0 +1,153 @@
+:root {
+  --claro: #eaf2ff;
+  --suave: rgba(214, 230, 255, 0.72);
+  --acento: #8fc0ff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+}
+
+body {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6vh 1.5rem 2.5rem;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--claro);
+  background-color: #050b1c;
+  overflow-x: hidden;
+}
+
+/* ---- Fundo ---- */
+.fundo {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: url("assets/fundo.jpg");
+  background-size: cover;
+  background-position: center 78%;
+  background-repeat: no-repeat;
+  animation: aproximar 24s ease-out forwards;
+}
+
+/* Escurece o topo e a base para o texto respirar */
+.vinheta {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 80% at 50% 92%, rgba(3, 10, 28, 0.72), transparent 60%),
+    linear-gradient(to bottom, rgba(3, 8, 24, 0.45) 0%, transparent 35%, rgba(2, 8, 26, 0.55) 100%);
+}
+
+@keyframes aproximar {
+  from { transform: scale(1.06); }
+  to   { transform: scale(1); }
+}
+
+/* ---- Conteúdo ---- */
+.conteudo {
+  flex: 0 0 auto;
+  max-width: 46rem;
+  margin-top: auto;
+  margin-bottom: clamp(1.5rem, 5vh, 4rem);
+  text-align: center;
+  animation: surgir 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.etiqueta {
+  font-size: clamp(0.68rem, 1.4vw, 0.8rem);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--acento);
+  opacity: 0.85;
+  margin-bottom: 1.1rem;
+}
+
+.titulo {
+  font-size: clamp(2.2rem, 8vw, 5rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-shadow: 0 2px 40px rgba(0, 12, 40, 0.75);
+}
+
+.reticencias span {
+  display: inline-block;
+  animation: pulsar 1.6s infinite ease-in-out;
+}
+.reticencias span:nth-child(2) { animation-delay: 0.22s; }
+.reticencias span:nth-child(3) { animation-delay: 0.44s; }
+
+@keyframes pulsar {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30%           { opacity: 1;    transform: translateY(-0.12em); }
+}
+
+.subtitulo {
+  margin: 1.4rem auto 0;
+  max-width: 32rem;
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--suave);
+}
+
+/* ---- Barra de progresso decorativa ---- */
+.progresso {
+  margin: 2.6rem auto 0;
+  width: min(20rem, 70vw);
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(190, 215, 255, 0.18);
+  overflow: hidden;
+}
+
+.barra {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--acento), transparent);
+  animation: deslizar 2.8s infinite ease-in-out;
+}
+
+@keyframes deslizar {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+@keyframes surgir {
+  from { opacity: 0; transform: translateY(1.5rem); filter: blur(6px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* ---- Rodapé ---- */
+.rodape {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: rgba(200, 220, 255, 0.45);
+  animation: surgir 1.2s 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Telas mais altas que 16:9 (celulares, janelas estreitas): amplia o fundo e
+   ancora na base, para a lua subir e não cair atrás do texto. */
+@media (max-aspect-ratio: 16 / 9) {
+  .fundo {
+    background-size: auto 155%;
+    background-position: center bottom;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .reticencias span { opacity: 1; }
+}

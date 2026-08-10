@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Em desenvolvimento...</title>
+<meta name="description" content="Este site está em desenvolvimento. Volte em breve.">
+<link rel="canonical" href="https://hylvenbs.xyz/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="hylvenbs.xyz">
+<meta property="og:url" content="https://hylvenbs.xyz/">
+<meta property="og:title" content="Em desenvolvimento...">
+<meta property="og:description" content="Estamos construindo esta experiência com calma e cuidado. Em breve, ela estará no ar.">
+<meta property="og:image" content="https://hylvenbs.xyz/assets/fundo.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b1c">
+
+<link rel="preload" as="image" href="assets/fundo.jpg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="fundo" role="presentation"></div>
+  <div class="vinheta" role="presentation"></div>
+
+  <main class="conteudo">
+    <p class="etiqueta">Algo novo está nascendo</p>
+
+    <h1 class="titulo">
+      Em desenvolvimento<span class="reticencias"><span>.</span><span>.</span><span>.</span></span>
+    </h1>
+
+    <p class="subtitulo">
+      Estamos construindo esta experiência com calma e cuidado.
+      Em breve, ela estará no ar.
+    </p>
+
+    <div class="progresso" role="progressbar" aria-label="Progresso do desenvolvimento" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">
+      <span class="barra"></span>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    <span id="ano"></span> &middot; Todos os direitos reservados
+  </footer>
+
+  <script>
+    document.getElementById('ano').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
