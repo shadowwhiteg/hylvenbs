@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BP } from "@/lib/base-path";
 
 type Job = {
   id: string;
@@ -53,17 +54,17 @@ export function PublishClient() {
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
-    const res = await fetch("/api/publish");
+    const res = await fetch(BP + "/api/publish");
     const data = await res.json();
     setJobs(data.jobs || []);
-    const mlRes = await fetch("/api/ml-sync");
+    const mlRes = await fetch(BP + "/api/ml-sync");
     const mlData = await mlRes.json();
     setMlRuns(mlData.recent || (mlData.last ? [mlData.last] : []));
 
-    const shopeeJobsRes = await fetch("/api/shopee-publish");
+    const shopeeJobsRes = await fetch(BP + "/api/shopee-publish");
     const shopeeJobsData = await shopeeJobsRes.json();
     setShopeeJobs(shopeeJobsData.jobs || []);
-    const shopeeRes = await fetch("/api/shopee-sync");
+    const shopeeRes = await fetch(BP + "/api/shopee-sync");
     const shopeeData = await shopeeRes.json();
     setShopeeRuns(shopeeData.recent || (shopeeData.last ? [shopeeData.last] : []));
   }
@@ -79,7 +80,7 @@ export function PublishClient() {
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/ml-sync", { method: "POST" });
+      const res = await fetch(BP + "/api/ml-sync", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Falha");
       setMessage(
@@ -98,7 +99,7 @@ export function PublishClient() {
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/shopee-sync", { method: "POST" });
+      const res = await fetch(BP + "/api/shopee-sync", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Falha");
       setMessage(
@@ -124,7 +125,7 @@ export function PublishClient() {
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/publish", { method: "DELETE" });
+      const res = await fetch(BP + "/api/publish", { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Falha ao limpar jobs");
       setMessage(`Jobs de publicação limpos (${data.deleted ?? 0} removidos).`);
@@ -149,8 +150,8 @@ export function PublishClient() {
     setMessage(null);
     try {
       const [mlRes, syncRes] = await Promise.all([
-        fetch("/api/ml-sync", { method: "DELETE" }),
-        fetch("/api/sync", { method: "DELETE" }),
+        fetch(BP + "/api/ml-sync", { method: "DELETE" }),
+        fetch(BP + "/api/sync", { method: "DELETE" }),
       ]);
       const mlData = await mlRes.json();
       const syncData = await syncRes.json();

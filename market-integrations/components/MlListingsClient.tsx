@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BP } from "@/lib/base-path";
 import Link from "next/link";
 import PriceInput from "./PriceInput";
 import {
@@ -316,7 +317,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch("/api/ml-listings", { method: "POST" });
+      const res = await fetch(BP + "/api/ml-listings", { method: "POST" });
       const data = (await readJson(res)) as
         | { imported?: number; pruned?: number; unlinkedProducts?: number; errors?: string[] }
         | null;
@@ -361,7 +362,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch("/api/ml-listings/bulk-price", {
+      const res = await fetch(BP + "/api/ml-listings/bulk-price", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), marginPercent }),
@@ -393,7 +394,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch("/api/ml-listings/bulk-promotion", {
+      const res = await fetch(BP + "/api/ml-listings/bulk-promotion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), percent }),
@@ -419,7 +420,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch("/api/ml-listings/bulk-status", {
+      const res = await fetch(BP + "/api/ml-listings/bulk-status", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), status }),
@@ -462,7 +463,7 @@ export function MlListingsClient() {
 
     setBusy(true);
     try {
-      const res = await fetch("/api/ml-listings/bulk-listing-type", {
+      const res = await fetch(BP + "/api/ml-listings/bulk-listing-type", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: pending.map((l) => l.id), listingTypeId }),
@@ -499,7 +500,7 @@ export function MlListingsClient() {
     setError(null);
     setCreatedKits([]);
     try {
-      const res = await fetch("/api/ml-listings/kits", {
+      const res = await fetch(BP + "/api/ml-listings/kits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -535,7 +536,7 @@ export function MlListingsClient() {
     setSuggestWarnings([]);
     setCreatedKits([]);
     try {
-      const res = await fetch("/api/ml-listings/kit-suggestions", {
+      const res = await fetch(BP + "/api/ml-listings/kit-suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Com itens marcados, restringe a análise a eles; senão usa o catálogo ativo.
@@ -577,7 +578,7 @@ export function MlListingsClient() {
     setError(null);
     setCreatedKits([]);
     try {
-      const res = await fetch("/api/ml-listings/kits", {
+      const res = await fetch(BP + "/api/ml-listings/kits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -657,7 +658,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch("/api/ml-listings/review", {
+      const res = await fetch(BP + "/api/ml-listings/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [id] }),
@@ -744,7 +745,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch("/api/ml-listings/review", {
+      const res = await fetch(BP + "/api/ml-listings/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
@@ -826,7 +827,7 @@ export function MlListingsClient() {
     setError(null);
     try {
       const ids = selected.size ? Array.from(selected) : undefined;
-      const res = await fetch("/api/ml-listings/sync-stock", {
+      const res = await fetch(BP + "/api/ml-listings/sync-stock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
@@ -855,14 +856,14 @@ export function MlListingsClient() {
     setError(null);
     try {
       const ids = selected.size ? Array.from(selected) : undefined;
-      let res = await fetch("/api/ml-listings/match-catalog", {
+      let res = await fetch(BP + "/api/ml-listings/match-catalog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
       });
       if (GATEWAY_ERROR_STATUSES.has(res.status)) {
         await sleep(1500);
-        res = await fetch("/api/ml-listings/match-catalog", {
+        res = await fetch(BP + "/api/ml-listings/match-catalog", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids }),

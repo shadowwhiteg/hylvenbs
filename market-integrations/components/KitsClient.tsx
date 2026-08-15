@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BP } from "@/lib/base-path";
 import Link from "next/link";
 
 type Kit = {
@@ -30,7 +31,7 @@ export function KitsClient() {
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
-    const res = await fetch("/api/kits");
+    const res = await fetch(BP + "/api/kits");
     const data = await res.json();
     setKits(data.kits || []);
   }

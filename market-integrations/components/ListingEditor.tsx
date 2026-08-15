@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { BP } from "@/lib/base-path";
 import { FieldLabel, HelpTip } from "@/components/HelpTip";
 import { LISTING_HELP, CATALOG_FILTER_HELP } from "@/lib/ui/help-texts";
 import { getCategoryGtinPolicy } from "@/lib/ml/category-attributes";
@@ -217,7 +218,7 @@ export function ListingEditor({
   }
 
   async function refreshSim(manualPrice?: number) {
-    const res = await fetch("/api/simulator", {
+    const res = await fetch(BP + "/api/simulator", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

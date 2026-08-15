@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BP } from "@/lib/base-path";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 type ToolTrace = { name: string; args: Record<string, unknown>; result: unknown };
@@ -22,7 +23,7 @@ export function AgentChat() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   async function loadHealth() {
-    const res = await fetch("/api/agent/health");
+    const res = await fetch(BP + "/api/agent/health");
     const data = await res.json();
     setHealth(data);
   }
@@ -45,7 +46,7 @@ export function AgentChat() {
     setMessages(nextHistory);
 
     try {
-      const res = await fetch("/api/agent/chat", {
+      const res = await fetch(BP + "/api/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

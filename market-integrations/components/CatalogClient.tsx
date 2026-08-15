@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BP } from "@/lib/base-path";
 import Link from "next/link";
 import { countPictures, hasAttributes } from "@/lib/catalog/filters";
 import { FieldLabel, HelpTip } from "@/components/HelpTip";
@@ -295,7 +296,7 @@ export function CatalogClient() {
 
   const loadSyncInfo = useCallback(async () => {
     try {
-      const syncRes = await fetch("/api/sync");
+      const syncRes = await fetch(BP + "/api/sync");
       const syncData = (await readJson(syncRes)) as {
         last?: { status: string; startedAt: string };
       } | null;
@@ -304,7 +305,7 @@ export function CatalogClient() {
           `Último sync: ${syncData.last.status} · ${new Date(syncData.last.startedAt).toLocaleString("pt-BR")}`
         );
       }
-      const mlRes = await fetch("/api/ml-sync");
+      const mlRes = await fetch(BP + "/api/ml-sync");
       const mlData = (await readJson(mlRes)) as {
         last?: { status: string; updatedCount: number; errorCount: number };
       } | null;
@@ -414,7 +415,7 @@ export function CatalogClient() {
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/sync", { method: "POST" });
+      const res = await fetch(BP + "/api/sync", { method: "POST" });
       const data = (await readJson(res)) as {
         runId?: string;
         status?: string;
@@ -434,7 +435,7 @@ export function CatalogClient() {
       const maxWaitMs = 15 * 60_000;
       while (Date.now() - startedAt < maxWaitMs) {
         await new Promise((r) => setTimeout(r, 2500));
-        const pollRes = await fetch("/api/sync");
+        const pollRes = await fetch(BP + "/api/sync");
         const pollData = (await readJson(pollRes)) as {
           last?: {
             id: string;
@@ -473,7 +474,7 @@ export function CatalogClient() {
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/ml-sync", { method: "POST" });
+      const res = await fetch(BP + "/api/ml-sync", { method: "POST" });
       const data = (await readJson(res)) as {
         status?: string;
         run?: { updatedCount?: number; skippedCount?: number; errorCount?: number };
@@ -495,7 +496,7 @@ export function CatalogClient() {
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/meudrop/announcements", { method: "POST" });
+      const res = await fetch(BP + "/api/meudrop/announcements", { method: "POST" });
       const data = (await readJson(res)) as {
         found?: boolean;
         saved?: boolean;
@@ -522,7 +523,7 @@ export function CatalogClient() {
 
   async function loadAnnouncements() {
     try {
-      const res = await fetch("/api/meudrop/announcements");
+      const res = await fetch(BP + "/api/meudrop/announcements");
       const data = (await readJson(res)) as { announcements?: Announcement[] } | null;
       setAnnouncements(data?.announcements ?? []);
     } catch {
@@ -535,7 +536,7 @@ export function CatalogClient() {
     setStockChangesOpen(next);
     if (next && !stockChanges.length) {
       try {
-        const res = await fetch("/api/stock-changes");
+        const res = await fetch(BP + "/api/stock-changes");
         const data = (await readJson(res)) as { changes?: StockChange[] } | null;
         setStockChanges(data?.changes ?? []);
       } catch {
@@ -550,7 +551,7 @@ export function CatalogClient() {
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/products/bulk-margin", {
+      const res = await fetch(BP + "/api/products/bulk-margin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -626,7 +627,7 @@ export function CatalogClient() {
     setExporting(true);
     setError(null);
     try {
-      const res = await fetch("/api/products/export");
+      const res = await fetch(BP + "/api/products/export");
       if (!res.ok) throw new Error(errorMessage(res, await readJson(res)));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -701,7 +702,7 @@ export function CatalogClient() {
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/publish", {
+      const res = await fetch(BP + "/api/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds: Array.from(selected) }),
@@ -728,7 +729,7 @@ export function CatalogClient() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/kits", {
+      const res = await fetch(BP + "/api/kits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds: Array.from(selected) }),

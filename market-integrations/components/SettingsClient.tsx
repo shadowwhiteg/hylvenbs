@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { BP } from "@/lib/base-path";
 import { useSearchParams } from "next/navigation";
 import { FieldLabel, HelpTip } from "@/components/HelpTip";
 import { SETTINGS_HELP } from "@/lib/ui/help-texts";
@@ -169,7 +170,7 @@ export function SettingsClient() {
   const [copied, setCopied] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/settings");
+    const res = await fetch(BP + "/api/settings");
     const data = (await res.json()) as SettingsResponse;
     setConnected(Boolean(data.ml?.connected));
     setUserId(data.ml?.userId);
@@ -229,7 +230,7 @@ export function SettingsClient() {
     setHasShopeePartnerKey(Boolean(data.hasShopeePartnerKey));
     setShopeePartnerKey("");
 
-    const shopeeRes = await fetch("/api/auth/shopee/status");
+    const shopeeRes = await fetch(BP + "/api/auth/shopee/status");
     const shopeeData = (await shopeeRes.json()) as ShopeeStatusResponse;
     setShopeeConnected(Boolean(shopeeData.connected));
     setShopeeShopId(shopeeData.shopId);
@@ -345,7 +346,7 @@ export function SettingsClient() {
       if (shopeePartnerKey.trim()) {
         body.shopeePartnerKey = shopeePartnerKey.trim();
       }
-      const res = await fetch("/api/settings", {
+      const res = await fetch(BP + "/api/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -524,7 +525,7 @@ export function SettingsClient() {
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
-          <a className="btn btn-primary" href="/api/auth/ml">
+          <a className="btn btn-primary" href={`${BP}/api/auth/ml`}>
             Conectar Mercado Livre
           </a>
           <button
@@ -536,7 +537,7 @@ export function SettingsClient() {
                 setBusy(true);
                 setError(null);
                 try {
-                  const res = await fetch("/api/auth/ml/verify", { method: "POST" });
+                  const res = await fetch(BP + "/api/auth/ml/verify", { method: "POST" });
                   const data = (await res.json()) as {
                     ok?: boolean;
                     userId?: string;
@@ -569,7 +570,7 @@ export function SettingsClient() {
                 void (async () => {
                   setBusy(true);
                   try {
-                    await fetch("/api/auth/ml/disconnect", { method: "POST" });
+                    await fetch(BP + "/api/auth/ml/disconnect", { method: "POST" });
                     setConnected(false);
                     setUserId(undefined);
                     setMessage("Mercado Livre desconectado");
@@ -664,7 +665,7 @@ export function SettingsClient() {
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
-          <a className="btn btn-primary" href="/api/auth/shopee">
+          <a className="btn btn-primary" href={`${BP}/api/auth/shopee`}>
             Conectar Shopee
           </a>
           {shopeeConnected && (
@@ -677,7 +678,7 @@ export function SettingsClient() {
                 void (async () => {
                   setBusy(true);
                   try {
-                    await fetch("/api/auth/shopee/disconnect", { method: "POST" });
+                    await fetch(BP + "/api/auth/shopee/disconnect", { method: "POST" });
                     setShopeeConnected(false);
                     setShopeeShopId(undefined);
                     setMessage("Shopee desconectada");
