@@ -186,7 +186,7 @@ export function ShopeeListingsClient() {
       params.set("sort", nextFilters.sort);
       params.set("dir", nextFilters.dir);
       params.set("pageSize", "500");
-      const res = await fetch(`/api/shopee-listings?${params}`);
+      const res = await fetch(`${BP}/api/shopee-listings?${params}`);
       const data = (await readJson(res)) as {
         listings?: Listing[];
         total?: number;
@@ -467,7 +467,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`/api/shopee-listings/${id}/price`, {
+      const res = await fetch(`${BP}/api/shopee-listings/${id}/price`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ price }),
@@ -488,7 +488,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`/api/shopee-listings/${id}/price`, {
+      const res = await fetch(`${BP}/api/shopee-listings/${id}/price`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ marginPercent }),
@@ -527,7 +527,7 @@ export function ShopeeListingsClient() {
 
   async function pollReviewJob(jobId: string) {
     try {
-      const res = await fetch(`/api/shopee-listings/review?jobId=${encodeURIComponent(jobId)}`);
+      const res = await fetch(`${BP}/api/shopee-listings/review?jobId=${encodeURIComponent(jobId)}`);
       const data = (await readJson(res)) as { job?: ReviewJobApi } | null;
       if (!res.ok || !data?.job) throw new Error(errorMessage(res, data));
 
@@ -668,7 +668,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`/api/shopee-listings/${id}/promotions`, {
+      const res = await fetch(`${BP}/api/shopee-listings/${id}/promotions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dealPrice }),

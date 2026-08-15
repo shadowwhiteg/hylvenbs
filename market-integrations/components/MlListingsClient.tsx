@@ -273,7 +273,7 @@ export function MlListingsClient() {
       params.set("sort", nextFilters.sort);
       params.set("dir", nextFilters.dir);
       params.set("pageSize", "500");
-      const res = await fetch(`/api/ml-listings?${params}`);
+      const res = await fetch(`${BP}/api/ml-listings?${params}`);
       const data = (await readJson(res)) as {
         listings?: Listing[];
         total?: number;
@@ -616,7 +616,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`/api/ml-listings/${id}/price`, {
+      const res = await fetch(`${BP}/api/ml-listings/${id}/price`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ price }),
@@ -637,7 +637,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`/api/ml-listings/${id}/price`, {
+      const res = await fetch(`${BP}/api/ml-listings/${id}/price`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ marginPercent }),
@@ -689,7 +689,7 @@ export function MlListingsClient() {
       // Comparação de categoria é só informativa (o ML não deixa trocar via API)
       // e custa uma chamada extra, então só busca no clique individual.
       try {
-        const catRes = await fetch(`/api/ml-listings/${id}/review`);
+        const catRes = await fetch(`${BP}/api/ml-listings/${id}/review`);
         const catData = (await readJson(catRes)) as {
           category?: { current: string | null; suggested: string; suggestedName: string; matches: boolean } | null;
         } | null;
@@ -711,7 +711,7 @@ export function MlListingsClient() {
 
   async function pollReviewJob(jobId: string) {
     try {
-      const res = await fetch(`/api/ml-listings/review?jobId=${encodeURIComponent(jobId)}`);
+      const res = await fetch(`${BP}/api/ml-listings/review?jobId=${encodeURIComponent(jobId)}`);
       const data = (await readJson(res)) as { job?: ReviewJobApi } | null;
       if (!res.ok || !data?.job) throw new Error(errorMessage(res, data));
 
@@ -789,7 +789,7 @@ export function MlListingsClient() {
           `${CATALOG_ACTION_LABELS[kind]}: ${i + 1}/${plan.targets.length} (${percent}%)`
         );
         try {
-          const res = await fetch(`/api/products/${target.productId}/${kind}`, {
+          const res = await fetch(`${BP}/api/products/${target.productId}/${kind}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             // `catalog-match` sem `apply` faz a busca e só auto-aplica quando
@@ -919,7 +919,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`/api/ml-listings/${id}/promotions`);
+      const res = await fetch(`${BP}/api/ml-listings/${id}/promotions`);
       const data = (await readJson(res)) as { promotions?: Promotion[]; error?: string } | null;
       if (!res.ok || !data) throw new Error(errorMessage(res, data));
 
@@ -942,7 +942,7 @@ export function MlListingsClient() {
         );
       }
 
-      const applyRes = await fetch(`/api/ml-listings/${id}/promotions`, {
+      const applyRes = await fetch(`${BP}/api/ml-listings/${id}/promotions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -976,7 +976,7 @@ export function MlListingsClient() {
     setPromotionsError(null);
     setDiscountPct("");
     try {
-      const res = await fetch(`/api/ml-listings/${id}/promotions`);
+      const res = await fetch(`${BP}/api/ml-listings/${id}/promotions`);
       const data = (await readJson(res)) as { promotions?: Promotion[]; error?: string } | null;
       if (!res.ok || !data) throw new Error(errorMessage(res, data));
       if (data.error) setPromotionsError(data.error);
@@ -1019,7 +1019,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`/api/ml-listings/${id}/promotions`, {
+      const res = await fetch(`${BP}/api/ml-listings/${id}/promotions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ promotionId, promotionType: promo.type, dealPrice }),
@@ -1051,7 +1051,7 @@ export function MlListingsClient() {
     try {
       const params = new URLSearchParams({ promotionType: promo.type });
       if (promotionId) params.set("promotionId", promotionId);
-      const res = await fetch(`/api/ml-listings/${id}/promotions?${params}`, { method: "DELETE" });
+      const res = await fetch(`${BP}/api/ml-listings/${id}/promotions?${params}`, { method: "DELETE" });
       const data = await readJson(res);
       if (!res.ok) throw new Error(errorMessage(res, data));
       setMessage(`Promoção cancelada em ${id}`);

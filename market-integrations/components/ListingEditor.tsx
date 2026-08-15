@@ -210,7 +210,7 @@ export function ListingEditor({
 
   const actionsBase = useMemo(() => {
     if (actionsBaseUrl) return actionsBaseUrl;
-    return productId ? `/api/products/${productId}` : null;
+    return productId ? `${BP}/api/products/${productId}` : null;
   }, [actionsBaseUrl, productId]);
 
   function setField<K extends keyof DraftForm>(key: K, value: DraftForm[K]) {

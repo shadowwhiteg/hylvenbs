@@ -43,7 +43,7 @@ export function KitsClient() {
   async function publishSelected(marketplace: "ml" | "shopee") {
     if (!selected.size) return;
     setError(null);
-    const url = marketplace === "ml" ? "/api/publish" : "/api/shopee-publish";
+    const url = marketplace === "ml" ? `${BP}/api/publish` : `${BP}/api/shopee-publish`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,7 +62,7 @@ export function KitsClient() {
   async function deleteKit(id: string) {
     if (!confirm("Excluir este kit? Essa ação não pode ser desfeita.")) return;
     setError(null);
-    const res = await fetch(`/api/kits/${id}`, { method: "DELETE" });
+    const res = await fetch(`${BP}/api/kits/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setError(data.error || "Falha ao excluir kit");
@@ -82,7 +82,7 @@ export function KitsClient() {
     setError(null);
     const ids = Array.from(selected);
     const results = await Promise.all(
-      ids.map((id) => fetch(`/api/kits/${id}`, { method: "DELETE" }))
+      ids.map((id) => fetch(`${BP}/api/kits/${id}`, { method: "DELETE" }))
     );
     const failed = results.filter((r) => !r.ok).length;
     if (failed) setError(`${failed} kit(s) não puderam ser excluídos`);

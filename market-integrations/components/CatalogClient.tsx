@@ -277,7 +277,7 @@ export function CatalogClient() {
       const params = toQuery(filters);
       params.set("page", String(page));
       params.set("pageSize", String(pageSize));
-      const res = await fetch(`/api/products?${params}`);
+      const res = await fetch(`${BP}/api/products?${params}`);
       const data = (await readJson(res)) as ProductsResponse | null;
       if (seq !== requestSeq.current) return;
       if (!res.ok || !data) {
@@ -398,7 +398,7 @@ export function CatalogClient() {
     try {
       const params = toQuery(filters);
       params.set("idsOnly", "1");
-      const res = await fetch(`/api/products?${params}`);
+      const res = await fetch(`${BP}/api/products?${params}`);
       const data = (await readJson(res)) as { ids?: string[] } | null;
       if (!res.ok || !data?.ids) throw new Error(errorMessage(res, data));
       setSelected(new Set(data.ids));
@@ -595,7 +595,7 @@ export function CatalogClient() {
         const percent = Math.round(((i + 1) / ids.length) * 100);
         setProgress(`${label}: ${i + 1}/${ids.length} (${percent}%)`);
         try {
-          const res = await fetch(`/api/products/${ids[i]}/${path}`, {
+          const res = await fetch(`${BP}/api/products/${ids[i]}/${path}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
