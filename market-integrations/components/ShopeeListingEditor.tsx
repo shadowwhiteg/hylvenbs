@@ -235,7 +235,7 @@ export function ShopeeListingEditor({ costPrice, loadUrl, saveUrl, heading }: Pr
         </label>
 
         <label className="full">
-          <FieldLabel>{'Características (JSON [{"attribute_id":1,"value":"..."}])'}</FieldLabel>
+          <FieldLabel>Características (JSON [{"{"}&quot;attribute_id&quot;:1,&quot;value&quot;:&quot;...&quot;{"}"}])</FieldLabel>
           <textarea value={form.attributes} onChange={(e) => setField("attributes", e.target.value)} />
         </label>
 

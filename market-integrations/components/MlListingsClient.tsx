@@ -16,7 +16,6 @@ import {
   planCatalogAction,
   type CatalogActionKind,
 } from "@/lib/ml-listings/catalog-actions";
-import { BP } from "@/lib/base-path";
 
 type Listing = {
   id: string;
@@ -273,7 +272,7 @@ export function MlListingsClient() {
       params.set("sort", nextFilters.sort);
       params.set("dir", nextFilters.dir);
       params.set("pageSize", "500");
-      const res = await fetch(`${BP}/api/ml-listings?${params}`);
+      const res = await fetch(`/api/ml-listings?${params}`);
       const data = (await readJson(res)) as {
         listings?: Listing[];
         total?: number;
@@ -317,7 +316,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings`, { method: "POST" });
+      const res = await fetch("/api/ml-listings", { method: "POST" });
       const data = (await readJson(res)) as
         | { imported?: number; pruned?: number; unlinkedProducts?: number; errors?: string[] }
         | null;
@@ -362,7 +361,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/bulk-price`, {
+      const res = await fetch("/api/ml-listings/bulk-price", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), marginPercent }),
@@ -394,7 +393,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/bulk-promotion`, {
+      const res = await fetch("/api/ml-listings/bulk-promotion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), percent }),
@@ -420,7 +419,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/bulk-status`, {
+      const res = await fetch("/api/ml-listings/bulk-status", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), status }),
@@ -463,7 +462,7 @@ export function MlListingsClient() {
 
     setBusy(true);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/bulk-listing-type`, {
+      const res = await fetch("/api/ml-listings/bulk-listing-type", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: pending.map((l) => l.id), listingTypeId }),
@@ -500,7 +499,7 @@ export function MlListingsClient() {
     setError(null);
     setCreatedKits([]);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/kits`, {
+      const res = await fetch("/api/ml-listings/kits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -536,7 +535,7 @@ export function MlListingsClient() {
     setSuggestWarnings([]);
     setCreatedKits([]);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/kit-suggestions`, {
+      const res = await fetch("/api/ml-listings/kit-suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Com itens marcados, restringe a análise a eles; senão usa o catálogo ativo.
@@ -578,7 +577,7 @@ export function MlListingsClient() {
     setError(null);
     setCreatedKits([]);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/kits`, {
+      const res = await fetch("/api/ml-listings/kits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -616,7 +615,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/${id}/price`, {
+      const res = await fetch(`/api/ml-listings/${id}/price`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ price }),
@@ -637,7 +636,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/${id}/price`, {
+      const res = await fetch(`/api/ml-listings/${id}/price`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ marginPercent }),
@@ -658,7 +657,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/review`, {
+      const res = await fetch("/api/ml-listings/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [id] }),
@@ -689,7 +688,7 @@ export function MlListingsClient() {
       // Comparação de categoria é só informativa (o ML não deixa trocar via API)
       // e custa uma chamada extra, então só busca no clique individual.
       try {
-        const catRes = await fetch(`${BP}/api/ml-listings/${id}/review`);
+        const catRes = await fetch(`/api/ml-listings/${id}/review`);
         const catData = (await readJson(catRes)) as {
           category?: { current: string | null; suggested: string; suggestedName: string; matches: boolean } | null;
         } | null;
@@ -711,7 +710,7 @@ export function MlListingsClient() {
 
   async function pollReviewJob(jobId: string) {
     try {
-      const res = await fetch(`${BP}/api/ml-listings/review?jobId=${encodeURIComponent(jobId)}`);
+      const res = await fetch(`/api/ml-listings/review?jobId=${encodeURIComponent(jobId)}`);
       const data = (await readJson(res)) as { job?: ReviewJobApi } | null;
       if (!res.ok || !data?.job) throw new Error(errorMessage(res, data));
 
@@ -745,7 +744,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/review`, {
+      const res = await fetch("/api/ml-listings/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
@@ -789,7 +788,7 @@ export function MlListingsClient() {
           `${CATALOG_ACTION_LABELS[kind]}: ${i + 1}/${plan.targets.length} (${percent}%)`
         );
         try {
-          const res = await fetch(`${BP}/api/products/${target.productId}/${kind}`, {
+          const res = await fetch(`/api/products/${target.productId}/${kind}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             // `catalog-match` sem `apply` faz a busca e só auto-aplica quando
@@ -827,7 +826,7 @@ export function MlListingsClient() {
     setError(null);
     try {
       const ids = selected.size ? Array.from(selected) : undefined;
-      const res = await fetch(`${BP}/api/ml-listings/sync-stock`, {
+      const res = await fetch("/api/ml-listings/sync-stock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
@@ -856,14 +855,14 @@ export function MlListingsClient() {
     setError(null);
     try {
       const ids = selected.size ? Array.from(selected) : undefined;
-      let res = await fetch(`${BP}/api/ml-listings/match-catalog`, {
+      let res = await fetch("/api/ml-listings/match-catalog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
       });
       if (GATEWAY_ERROR_STATUSES.has(res.status)) {
         await sleep(1500);
-        res = await fetch(`${BP}/api/ml-listings/match-catalog`, {
+        res = await fetch("/api/ml-listings/match-catalog", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids }),
@@ -919,7 +918,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/${id}/promotions`);
+      const res = await fetch(`/api/ml-listings/${id}/promotions`);
       const data = (await readJson(res)) as { promotions?: Promotion[]; error?: string } | null;
       if (!res.ok || !data) throw new Error(errorMessage(res, data));
 
@@ -942,7 +941,7 @@ export function MlListingsClient() {
         );
       }
 
-      const applyRes = await fetch(`${BP}/api/ml-listings/${id}/promotions`, {
+      const applyRes = await fetch(`/api/ml-listings/${id}/promotions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -976,7 +975,7 @@ export function MlListingsClient() {
     setPromotionsError(null);
     setDiscountPct("");
     try {
-      const res = await fetch(`${BP}/api/ml-listings/${id}/promotions`);
+      const res = await fetch(`/api/ml-listings/${id}/promotions`);
       const data = (await readJson(res)) as { promotions?: Promotion[]; error?: string } | null;
       if (!res.ok || !data) throw new Error(errorMessage(res, data));
       if (data.error) setPromotionsError(data.error);
@@ -1019,7 +1018,7 @@ export function MlListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/ml-listings/${id}/promotions`, {
+      const res = await fetch(`/api/ml-listings/${id}/promotions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ promotionId, promotionType: promo.type, dealPrice }),
@@ -1051,7 +1050,7 @@ export function MlListingsClient() {
     try {
       const params = new URLSearchParams({ promotionType: promo.type });
       if (promotionId) params.set("promotionId", promotionId);
-      const res = await fetch(`${BP}/api/ml-listings/${id}/promotions?${params}`, { method: "DELETE" });
+      const res = await fetch(`/api/ml-listings/${id}/promotions?${params}`, { method: "DELETE" });
       const data = await readJson(res);
       if (!res.ok) throw new Error(errorMessage(res, data));
       setMessage(`Promoção cancelada em ${id}`);

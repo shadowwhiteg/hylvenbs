@@ -4,10 +4,8 @@ import {
   getRequestOrigin,
   isLoopbackOrPrivateHostname,
   resolveShopeeCallbackUri,
-  getPublicOrigin,
 } from "@/lib/net/allowed-hosts";
 import { getTunnelUrl } from "@/lib/tunnel/manager";
-import { BP } from "@/lib/base-path";
 
 function settingsErrorRedirect(req: NextRequest, code: string) {
   const origin = getRequestOrigin(req.headers, req.nextUrl.origin);
@@ -18,7 +16,7 @@ function settingsErrorRedirect(req: NextRequest, code: string) {
       return req.nextUrl.origin;
     }
   })();
-  return NextResponse.redirect(`${base}${BP}/settings?error=${code}`);
+  return NextResponse.redirect(`${base}/settings?error=${code}`);
 }
 
 /**
@@ -31,17 +29,11 @@ function resolveShopeeRedirectUri(origin: string): string {
   const tunnelUrl = getTunnelUrl();
   const envUri = process.env.SHOPEE_REDIRECT_URI || "";
 
-  // Mesmo critério do ML: com domínio próprio o redirect_uri é sempre ele.
-  const publicOrigin = getPublicOrigin();
-  if (publicOrigin) {
-    return `${publicOrigin}${BP}/api/auth/shopee/callback`;
-  }
-
   if (tunnelUrl) {
     try {
       const host = new URL(origin).hostname;
       if (isLoopbackOrPrivateHostname(host)) {
-        return `${tunnelUrl.replace(/\/$/, "")}${BP}/api/auth/shopee/callback`;
+        return `${tunnelUrl.replace(/\/$/, "")}/api/auth/shopee/callback`;
       }
     } catch {
       // fall through
@@ -49,7 +41,7 @@ function resolveShopeeRedirectUri(origin: string): string {
   }
 
   if (fromOrigin) return fromOrigin;
-  if (tunnelUrl) return `${tunnelUrl.replace(/\/$/, "")}${BP}/api/auth/shopee/callback`;
+  if (tunnelUrl) return `${tunnelUrl.replace(/\/$/, "")}/api/auth/shopee/callback`;
   return envUri;
 }
 

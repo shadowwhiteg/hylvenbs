@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 import { ListingEditor, type DraftForm } from "@/components/ListingEditor";
 import { ShopeeListingEditor } from "@/components/ShopeeListingEditor";
 import { MarketplaceEditorTabs } from "@/components/MarketplaceEditorTabs";
-import { BP } from "@/lib/base-path";
 
 export default async function KitEditPage({
   params,
@@ -52,7 +51,7 @@ export default async function KitEditPage({
         catalogProductId: kit.draft.catalogProductId || "",
         marginPercentOverride: kit.draft.marginPercentOverride,
       } satisfies DraftForm}
-      saveUrl={`${BP}/api/kits/${kit.id}`}
+      saveUrl={`/api/kits/${kit.id}`}
     />
   ) : (
     <p className="muted">Este kit não tem rascunho de Mercado Livre (veio da Shopee).</p>
@@ -62,8 +61,8 @@ export default async function KitEditPage({
     <ShopeeListingEditor
       heading={`Kit (Shopee): ${kit.title}`}
       costPrice={kit.costPrice}
-      loadUrl={`${BP}/api/kits/${kit.id}/shopee-draft`}
-      saveUrl={`${BP}/api/kits/${kit.id}/shopee-draft`}
+      loadUrl={`/api/kits/${kit.id}/shopee-draft`}
+      saveUrl={`/api/kits/${kit.id}/shopee-draft`}
     />
   );
 

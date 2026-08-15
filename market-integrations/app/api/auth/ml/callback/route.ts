@@ -4,7 +4,6 @@ import {
   getRequestOrigin,
   resolveCallbackUri,
 } from "@/lib/net/allowed-hosts";
-import { BP } from "@/lib/base-path";
 
 function redirectBase(req: NextRequest): string {
   const origin = getRequestOrigin(req.headers, req.nextUrl.origin);
@@ -16,7 +15,7 @@ function redirectBase(req: NextRequest): string {
 }
 
 function failRedirect(base: string, reason: string) {
-  const url = new URL(`${base}${BP}/settings`);
+  const url = new URL(`${base}/settings`);
   url.searchParams.set("error", "oauth");
   url.searchParams.set("oauth_reason", reason);
   return NextResponse.redirect(url.toString());
@@ -56,7 +55,7 @@ export async function GET(req: NextRequest) {
       throw new Error("access_token inválido na resposta do ML");
     }
     await saveTokens(tokens);
-    const res = NextResponse.redirect(`${base}${BP}/settings?connected=1`);
+    const res = NextResponse.redirect(`${base}/settings?connected=1`);
     res.cookies.delete("ml_oauth_redirect_uri");
     return res;
   } catch (e) {

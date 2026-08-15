@@ -1,13 +1,8 @@
 node_modules
 .next
 .env
-.env.local
-.env.*.local
 .tunnel-url
 .tunnel-status
-.tunnel-*.lock
-.data
-tsconfig.tsbuildinfo
 *.db
 *.db-journal
 prisma/dev.db

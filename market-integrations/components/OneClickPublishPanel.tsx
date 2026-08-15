@@ -8,7 +8,6 @@ import {
 } from "@/lib/oneclick/bulk";
 import { gtinFromProduct, isValidGtin } from "@/lib/oneclick/gtin";
 import { feesForPrice, solvePriceForMargin } from "@/lib/pricing/marketplace-fees";
-import { BP } from "@/lib/base-path";
 
 export type OneClickActiveJobInfo = {
   id: string;
@@ -111,8 +110,7 @@ export function OneClickPublishPanel({
   onActiveJobChange?: (job: OneClickActiveJobInfo | null) => void;
   cancelRef?: MutableRefObject<(() => Promise<void>) | null>;
 }) {
-  const apiBase =
-    marketplace === "ml" ? `${BP}/api/one-click-ml` : `${BP}/api/one-click-shopee`;
+  const apiBase = marketplace === "ml" ? "/api/one-click-ml" : "/api/one-click-shopee";
   const showGtin = marketplace === "ml";
   const marketplaceLabel = marketplace === "ml" ? "ML" : "Shopee";
 
@@ -171,7 +169,7 @@ export function OneClickPublishPanel({
       const params = new URLSearchParams();
       params.set("pageSize", "500");
       params.set("page", String(page));
-      const res = await fetch(`${BP}/api/products?${params.toString()}`);
+      const res = await fetch(`/api/products?${params.toString()}`);
       const data = await res.json();
       const batch: Product[] = data.products || [];
       all.push(...batch);
@@ -316,7 +314,7 @@ export function OneClickPublishPanel({
         const params = new URLSearchParams();
         params.set("q", query.trim());
         params.set("pageSize", "25");
-        const res = await fetch(`${BP}/api/products?${params.toString()}`);
+        const res = await fetch(`/api/products?${params.toString()}`);
         const data = await res.json();
         setResults(data.products || []);
       } finally {

@@ -10,7 +10,6 @@ import {
   readGtinFromAttributesJson,
   upsertGtinInAttributesJson,
 } from "@/lib/ml/gtin-draft";
-import { BP } from "@/lib/base-path";
 
 export type DraftForm = {
   title: string;
@@ -210,7 +209,7 @@ export function ListingEditor({
 
   const actionsBase = useMemo(() => {
     if (actionsBaseUrl) return actionsBaseUrl;
-    return productId ? `${BP}/api/products/${productId}` : null;
+    return productId ? `/api/products/${productId}` : null;
   }, [actionsBaseUrl, productId]);
 
   function setField<K extends keyof DraftForm>(key: K, value: DraftForm[K]) {
@@ -218,7 +217,7 @@ export function ListingEditor({
   }
 
   async function refreshSim(manualPrice?: number) {
-    const res = await fetch(`${BP}/api/simulator`, {
+    const res = await fetch("/api/simulator", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

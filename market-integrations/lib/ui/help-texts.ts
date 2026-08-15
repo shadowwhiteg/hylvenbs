@@ -38,8 +38,6 @@ export const CATALOG_FILTER_HELP = {
 
 /** Textos de ajuda para Configurações. */
 export const SETTINGS_HELP = {
-  publicUrl:
-    "Domínio fixo em que o app é servido (PUBLIC_BASE_URL). Substitui o túnel Cloudflare: os callbacks de OAuth passam a apontar para ele e não mudam mais a cada reinício.",
   tunnel:
     "URL pública HTTPS gerada pelo Cloudflare Quick Tunnel. Necessária para OAuth do Mercado Livre.",
   callback:
@@ -47,7 +45,7 @@ export const SETTINGS_HELP = {
   notifications:
     "Cadastre esta URL no DevCenter em URL de notificações — NÃO use o callback OAuth aqui.",
   openViaTunnel:
-    "Abra o app pela URL pública HTTPS (domínio próprio ou túnel) ao clicar em Conectar. IP/localhost fazem o ML falhar ou o cookie do OAuth se perder.",
+    "Abra o app pela URL HTTPS do túnel ao clicar em Conectar. IP/localhost fazem o ML falhar ou o cookie do OAuth se perder.",
   mlSecret:
     "Secret Key do app no Mercado Livre. Fica salvo só no servidor e nunca é exibido de volta.",
   margin:

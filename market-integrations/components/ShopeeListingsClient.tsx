@@ -5,7 +5,6 @@ import Link from "next/link";
 import PriceInput from "./PriceInput";
 import { OneClickPublishPanel, type OneClickActiveJobInfo } from "./OneClickPublishPanel";
 import { CatalogToolsPanel } from "./CatalogToolsPanel";
-import { BP } from "@/lib/base-path";
 
 type Listing = {
   id: string;
@@ -186,7 +185,7 @@ export function ShopeeListingsClient() {
       params.set("sort", nextFilters.sort);
       params.set("dir", nextFilters.dir);
       params.set("pageSize", "500");
-      const res = await fetch(`${BP}/api/shopee-listings?${params}`);
+      const res = await fetch(`/api/shopee-listings?${params}`);
       const data = (await readJson(res)) as {
         listings?: Listing[];
         total?: number;
@@ -230,7 +229,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings`, { method: "POST" });
+      const res = await fetch("/api/shopee-listings", { method: "POST" });
       const data = (await readJson(res)) as { imported?: number; errors?: string[] } | null;
       if (!res.ok || !data) throw new Error(errorMessage(res, data));
       setMessage(
@@ -267,7 +266,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/bulk-price`, {
+      const res = await fetch("/api/shopee-listings/bulk-price", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), price, marginPercent }),
@@ -298,7 +297,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/bulk-promotion`, {
+      const res = await fetch("/api/shopee-listings/bulk-promotion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), percent }),
@@ -324,7 +323,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/bulk-status`, {
+      const res = await fetch("/api/shopee-listings/bulk-status", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), status }),
@@ -354,7 +353,7 @@ export function ShopeeListingsClient() {
     setError(null);
     setCreatedKits([]);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/kits`, {
+      const res = await fetch("/api/shopee-listings/kits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -390,7 +389,7 @@ export function ShopeeListingsClient() {
     setSuggestWarnings([]);
     setCreatedKits([]);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/kit-suggestions`, {
+      const res = await fetch("/api/shopee-listings/kit-suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: selected.size ? Array.from(selected) : [] }),
@@ -429,7 +428,7 @@ export function ShopeeListingsClient() {
     setError(null);
     setCreatedKits([]);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/kits`, {
+      const res = await fetch("/api/shopee-listings/kits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -467,7 +466,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/${id}/price`, {
+      const res = await fetch(`/api/shopee-listings/${id}/price`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ price }),
@@ -488,7 +487,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/${id}/price`, {
+      const res = await fetch(`/api/shopee-listings/${id}/price`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ marginPercent }),
@@ -509,7 +508,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/review`, {
+      const res = await fetch("/api/shopee-listings/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [id] }),
@@ -527,7 +526,7 @@ export function ShopeeListingsClient() {
 
   async function pollReviewJob(jobId: string) {
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/review?jobId=${encodeURIComponent(jobId)}`);
+      const res = await fetch(`/api/shopee-listings/review?jobId=${encodeURIComponent(jobId)}`);
       const data = (await readJson(res)) as { job?: ReviewJobApi } | null;
       if (!res.ok || !data?.job) throw new Error(errorMessage(res, data));
 
@@ -559,7 +558,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/review`, {
+      const res = await fetch("/api/shopee-listings/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
@@ -580,7 +579,7 @@ export function ShopeeListingsClient() {
     setError(null);
     try {
       const ids = selected.size ? Array.from(selected) : undefined;
-      const res = await fetch(`${BP}/api/shopee-listings/sync-stock`, {
+      const res = await fetch("/api/shopee-listings/sync-stock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
@@ -609,14 +608,14 @@ export function ShopeeListingsClient() {
     setError(null);
     try {
       const ids = selected.size ? Array.from(selected) : undefined;
-      let res = await fetch(`${BP}/api/shopee-listings/match-catalog`, {
+      let res = await fetch("/api/shopee-listings/match-catalog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
       });
       if (GATEWAY_ERROR_STATUSES.has(res.status)) {
         await sleep(1500);
-        res = await fetch(`${BP}/api/shopee-listings/match-catalog`, {
+        res = await fetch("/api/shopee-listings/match-catalog", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids }),
@@ -668,7 +667,7 @@ export function ShopeeListingsClient() {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${BP}/api/shopee-listings/${id}/promotions`, {
+      const res = await fetch(`/api/shopee-listings/${id}/promotions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dealPrice }),

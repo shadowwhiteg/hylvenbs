@@ -12,7 +12,6 @@ import {
   AI_PROVIDER_MODEL_PLACEHOLDER,
   type AiProviderId,
 } from "@/lib/agent/providers/meta";
-import { BP } from "@/lib/base-path";
 
 const SYNC_MODES = [
   { value: "always", label: "Sempre (estoque + preço recalculado)" },
@@ -70,7 +69,6 @@ type SettingsResponse = {
   };
   tunnelUrl?: string | null;
   tunnelStatus?: TunnelStatus | null;
-  publicBaseUrl?: string | null;
   oauthCallbackUrl?: string | null;
   notificationsCallbackUrl?: string | null;
   hasMlClientSecret?: boolean;
@@ -154,7 +152,6 @@ export function SettingsClient() {
   );
   const [tunnelUrl, setTunnelUrl] = useState<string | null>(null);
   const [tunnelStatus, setTunnelStatus] = useState<TunnelStatus | null>(null);
-  const [publicBaseUrl, setPublicBaseUrl] = useState<string | null>(null);
   const [oauthCallbackUrl, setOauthCallbackUrl] = useState<string | null>(null);
   const [notificationsCallbackUrl, setNotificationsCallbackUrl] = useState<string | null>(null);
   const [hasMlClientSecret, setHasMlClientSecret] = useState(false);
@@ -172,7 +169,7 @@ export function SettingsClient() {
   const [copied, setCopied] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch(`${BP}/api/settings`);
+    const res = await fetch("/api/settings");
     const data = (await res.json()) as SettingsResponse;
     setConnected(Boolean(data.ml?.connected));
     setUserId(data.ml?.userId);
@@ -222,7 +219,6 @@ export function SettingsClient() {
     );
     setTunnelUrl(data.tunnelUrl ?? null);
     setTunnelStatus(data.tunnelStatus ?? null);
-    setPublicBaseUrl(data.publicBaseUrl ?? null);
     setOauthCallbackUrl(data.oauthCallbackUrl ?? null);
     setNotificationsCallbackUrl(data.notificationsCallbackUrl ?? null);
     setHasMlClientSecret(Boolean(data.hasMlClientSecret));
@@ -233,7 +229,7 @@ export function SettingsClient() {
     setHasShopeePartnerKey(Boolean(data.hasShopeePartnerKey));
     setShopeePartnerKey("");
 
-    const shopeeRes = await fetch(`${BP}/api/auth/shopee/status`);
+    const shopeeRes = await fetch("/api/auth/shopee/status");
     const shopeeData = (await shopeeRes.json()) as ShopeeStatusResponse;
     setShopeeConnected(Boolean(shopeeData.connected));
     setShopeeShopId(shopeeData.shopId);
@@ -256,7 +252,7 @@ export function SettingsClient() {
       };
       setError(
         reasonHints[oauthReason || ""] ||
-          "Falha no OAuth do Mercado Livre. Cadastre o callback exato no DevCenter e abra o app pela URL pública."
+          "Falha no OAuth do Mercado Livre. Cadastre o callback exato no DevCenter e abra o app pela URL do túnel."
       );
     }
     if (err === "ml_app_id") setError("ML_APP_ID ausente no .env");
@@ -290,7 +286,7 @@ export function SettingsClient() {
       };
       setError(
         shopeeReasonHints[oauthReason || ""] ||
-          "Falha no OAuth da Shopee. Cadastre o callback exato no Partner App e abra o app pela URL pública."
+          "Falha no OAuth da Shopee. Cadastre o callback exato no Partner App e abra o app pela URL do túnel."
       );
     }
   }, [search, load]);
@@ -349,7 +345,7 @@ export function SettingsClient() {
       if (shopeePartnerKey.trim()) {
         body.shopeePartnerKey = shopeePartnerKey.trim();
       }
-      const res = await fetch(`${BP}/api/settings`, {
+      const res = await fetch("/api/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -382,8 +378,7 @@ export function SettingsClient() {
         <div>
           <h1>Configurações</h1>
           <p className="muted">
-            OAuth Mercado Livre, {publicBaseUrl ? "URL pública" : "túnel Cloudflare"},
-            políticas de sync automático e Ollama.
+            OAuth Mercado Livre, túnel Cloudflare, políticas de sync automático e Ollama.
           </p>
         </div>
       </div>
@@ -399,29 +394,6 @@ export function SettingsClient() {
           </span>
         </p>
 
-        {publicBaseUrl ? (
-          <div style={{ marginBottom: "1rem" }}>
-            <p style={{ marginBottom: "0.35rem" }}>
-              <FieldLabel help={SETTINGS_HELP.publicUrl}>URL pública</FieldLabel>:{" "}
-              <span className="badge ok">domínio próprio</span>
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
-              <code style={{ wordBreak: "break-all" }}>{publicBaseUrl}</code>
-              <button
-                type="button"
-                className="btn"
-                style={{ padding: "0.25rem 0.6rem", fontSize: "0.85rem" }}
-                onClick={() => void copyText("public", publicBaseUrl)}
-              >
-                {copied === "public" ? "Copiado" : "Copiar URL"}
-              </button>
-            </div>
-            <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-              O túnel Cloudflare não é mais necessário — os callbacks abaixo já
-              apontam para este domínio.
-            </p>
-          </div>
-        ) : (
         <div style={{ marginBottom: "1rem" }}>
           <p style={{ marginBottom: "0.35rem" }}>
             <FieldLabel help={SETTINGS_HELP.tunnel}>Túnel Cloudflare</FieldLabel>:{" "}
@@ -456,7 +428,6 @@ export function SettingsClient() {
             </p>
           )}
         </div>
-        )}
 
         <div style={{ marginBottom: "1rem" }}>
           <FieldLabel help={SETTINGS_HELP.callback}>
@@ -478,7 +449,7 @@ export function SettingsClient() {
             </div>
           ) : (
             <p className="muted" style={{ margin: 0 }}>
-              Cadastre <code>{`{URL_DO_TUNEL}${BP}/api/auth/ml/callback`}</code> quando o túnel
+              Cadastre <code>{"{URL_DO_TUNEL}/api/auth/ml/callback"}</code> quando o túnel
               estiver ativo.
             </p>
           )}
@@ -504,7 +475,7 @@ export function SettingsClient() {
             </div>
           ) : (
             <p className="muted" style={{ margin: 0 }}>
-              Cadastre <code>{`{URL_DO_TUNEL}${BP}/api/ml/notifications`}</code> quando o túnel
+              Cadastre <code>{"{URL_DO_TUNEL}/api/ml/notifications"}</code> quando o túnel
               estiver ativo.
             </p>
           )}
@@ -543,17 +514,8 @@ export function SettingsClient() {
               OAuth).
             </li>
             <li>
-              {publicBaseUrl ? (
-                <>
-                  Abra este app por <code>{publicBaseUrl}</code> (HTTPS), não por
-                  IP/localhost, e clique em Conectar.
-                </>
-              ) : (
-                <>
-                  Abra este app pela URL do túnel Cloudflare (HTTPS), não por
-                  IP/localhost, e clique em Conectar.
-                </>
-              )}
+              Abra este app pela URL do túnel Cloudflare (HTTPS), não por IP/localhost, e
+              clique em Conectar.
             </li>
             <li>
               Faça login com a conta <em>principal</em> do vendedor (não colaborador).
@@ -562,7 +524,7 @@ export function SettingsClient() {
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
-          <a className="btn btn-primary" href={`${BP}/api/auth/ml`}>
+          <a className="btn btn-primary" href="/api/auth/ml">
             Conectar Mercado Livre
           </a>
           <button
@@ -574,7 +536,7 @@ export function SettingsClient() {
                 setBusy(true);
                 setError(null);
                 try {
-                  const res = await fetch(`${BP}/api/auth/ml/verify`, { method: "POST" });
+                  const res = await fetch("/api/auth/ml/verify", { method: "POST" });
                   const data = (await res.json()) as {
                     ok?: boolean;
                     userId?: string;
@@ -607,7 +569,7 @@ export function SettingsClient() {
                 void (async () => {
                   setBusy(true);
                   try {
-                    await fetch(`${BP}/api/auth/ml/disconnect`, { method: "POST" });
+                    await fetch("/api/auth/ml/disconnect", { method: "POST" });
                     setConnected(false);
                     setUserId(undefined);
                     setMessage("Mercado Livre desconectado");
@@ -652,7 +614,7 @@ export function SettingsClient() {
             </div>
           ) : (
             <p className="muted" style={{ margin: 0 }}>
-              Cadastre <code>{`{URL_DO_TUNEL}${BP}/api/auth/shopee/callback`}</code> como Redirect URL
+              Cadastre <code>{"{URL_DO_TUNEL}/api/auth/shopee/callback"}</code> como Redirect URL
               do app em open.shopee.com quando o túnel estiver ativo.
             </p>
           )}
@@ -702,7 +664,7 @@ export function SettingsClient() {
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
-          <a className="btn btn-primary" href={`${BP}/api/auth/shopee`}>
+          <a className="btn btn-primary" href="/api/auth/shopee">
             Conectar Shopee
           </a>
           {shopeeConnected && (
@@ -715,7 +677,7 @@ export function SettingsClient() {
                 void (async () => {
                   setBusy(true);
                   try {
-                    await fetch(`${BP}/api/auth/shopee/disconnect`, { method: "POST" });
+                    await fetch("/api/auth/shopee/disconnect", { method: "POST" });
                     setShopeeConnected(false);
                     setShopeeShopId(undefined);
                     setMessage("Shopee desconectada");

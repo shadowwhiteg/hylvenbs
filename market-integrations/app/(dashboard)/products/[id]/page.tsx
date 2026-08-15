@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 import { ListingEditor, type DraftForm } from "@/components/ListingEditor";
 import { ShopeeListingEditor } from "@/components/ShopeeListingEditor";
 import { MarketplaceEditorTabs } from "@/components/MarketplaceEditorTabs";
-import { BP } from "@/lib/base-path";
 
 export default async function ProductEditPage({
   params,
@@ -50,7 +49,7 @@ export default async function ProductEditPage({
           heading={`Editar: ${product.title}`}
           costPrice={product.costPrice}
           initial={initial}
-          saveUrl={`${BP}/api/products/${product.id}`}
+          saveUrl={`/api/products/${product.id}`}
           productId={product.id}
           originalTitle={product.title}
           supplierCategoryPath={product.categoryPath}
@@ -61,8 +60,8 @@ export default async function ProductEditPage({
         <ShopeeListingEditor
           heading={`Editar (Shopee): ${product.title}`}
           costPrice={product.costPrice}
-          loadUrl={`${BP}/api/products/${product.id}/shopee-draft`}
-          saveUrl={`${BP}/api/products/${product.id}/shopee-draft`}
+          loadUrl={`/api/products/${product.id}/shopee-draft`}
+          saveUrl={`/api/products/${product.id}/shopee-draft`}
         />
       }
     />

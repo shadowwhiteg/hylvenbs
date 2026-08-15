@@ -1,33 +1,11 @@
-import { BP } from "@/lib/base-path";
-
 const DEFAULT_HOSTS = ["localhost", "127.0.0.1", "10.131.24.6"];
-
-/**
- * Origem pública fixa do app (ex.: https://hylvenbs.xyz), definida em
- * PUBLIC_BASE_URL. É o que substitui o Quick Tunnel em produção: quando
- * existe, é a base canônica dos callbacks de OAuth e notificações.
- * Retorna só a origem — o basePath é aplicado por quem monta a URL.
- */
-export function getPublicOrigin(): string | null {
-  const raw = (process.env.PUBLIC_BASE_URL || "").trim();
-  if (!raw) return null;
-  try {
-    return new URL(raw).origin;
-  } catch {
-    return null;
-  }
-}
 
 export function getAllowedHosts(): string[] {
   const extra = (process.env.ALLOWED_HOSTS || "")
     .split(",")
     .map((h) => h.trim())
     .filter(Boolean);
-  const publicOrigin = getPublicOrigin();
-  const publicHost = publicOrigin ? new URL(publicOrigin).hostname : null;
-  return Array.from(
-    new Set([...DEFAULT_HOSTS, ...extra, ...(publicHost ? [publicHost] : [])])
-  );
+  return Array.from(new Set([...DEFAULT_HOSTS, ...extra]));
 }
 
 export function isAllowedHost(hostname: string): boolean {
@@ -68,7 +46,7 @@ export function resolveCallbackUri(origin: string): string | null {
   try {
     const url = new URL(origin);
     if (!isAllowedHost(url.hostname)) return null;
-    return `${url.origin}${BP}/api/auth/ml/callback`;
+    return `${url.origin}/api/auth/ml/callback`;
   } catch {
     return null;
   }
@@ -78,7 +56,7 @@ export function resolveShopeeCallbackUri(origin: string): string | null {
   try {
     const url = new URL(origin);
     if (!isAllowedHost(url.hostname)) return null;
-    return `${url.origin}${BP}/api/auth/shopee/callback`;
+    return `${url.origin}/api/auth/shopee/callback`;
   } catch {
     return null;
   }

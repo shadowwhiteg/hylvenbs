@@ -25,7 +25,6 @@ export async function GET() {
     ml,
     tunnelUrl: tunnel.tunnelUrl,
     tunnelStatus: tunnel.tunnelStatus,
-    publicBaseUrl: tunnel.publicBaseUrl,
     oauthCallbackUrl: tunnel.oauthCallbackUrl,
     notificationsCallbackUrl: tunnel.notificationsCallbackUrl,
     hasMlClientSecret: hasSecret,
@@ -227,7 +226,6 @@ export async function PATCH(req: NextRequest) {
     hasShopeePartnerKey: hasShopeeKey,
     tunnelUrl: tunnel.tunnelUrl,
     tunnelStatus: tunnel.tunnelStatus,
-    publicBaseUrl: tunnel.publicBaseUrl,
     oauthCallbackUrl: tunnel.oauthCallbackUrl,
     notificationsCallbackUrl: tunnel.notificationsCallbackUrl,
   });

@@ -1,8 +1,6 @@
 import { spawn, type ChildProcess } from "child_process";
 import fs from "fs";
 import path from "path";
-import { BP } from "@/lib/base-path";
-import { getPublicOrigin } from "@/lib/net/allowed-hosts";
 
 export type TunnelStatus = "stopped" | "starting" | "up" | "error";
 
@@ -127,19 +125,10 @@ function ingestChunk(chunk: string) {
   setUrl(matches[matches.length - 1]);
 }
 
-export function isTunnelDisabled(): boolean {
-  return process.env.DISABLE_TUNNEL === "1" || process.env.DISABLE_TUNNEL === "true";
-}
-
 /**
  * Current tunnel URL from in-memory state or `.tunnel-url` (standalone tunnel).
- *
- * Com o túnel desligado devolve null mesmo que os arquivos `.tunnel-url` /
- * `.tunnel-status` de uma sessão anterior ainda existam no disco — senão o
- * OAuth cairia numa URL morta e as Configurações mostrariam status falso.
  */
 export function getTunnelUrl(): string | null {
-  if (isTunnelDisabled()) return null;
   const state = getState();
   if (state.url) return state.url;
   const fromFile = readPersistedUrl();
@@ -153,16 +142,15 @@ export function getTunnelUrl(): string | null {
 export function getTunnelInfo(): {
   tunnelUrl: string | null;
   tunnelStatus: TunnelStatus;
-  publicBaseUrl: string | null;
   oauthCallbackUrl: string | null;
   notificationsCallbackUrl: string | null;
   shopeeCallbackUrl: string | null;
 } {
   const tunnelUrl = getTunnelUrl();
   const state = getState();
-  const fileStatus = isTunnelDisabled() ? null : readPersistedStatus();
+  const fileStatus = readPersistedStatus();
 
-  let tunnelStatus = isTunnelDisabled() ? ("stopped" as TunnelStatus) : state.status;
+  let tunnelStatus = state.status;
   if (fileStatus && state.status === "stopped") {
     tunnelStatus = fileStatus.status;
   }
@@ -170,19 +158,14 @@ export function getTunnelInfo(): {
     tunnelStatus = "up";
   }
 
-  // A origem pública fixa (PUBLIC_BASE_URL) tem precedência sobre o túnel:
-  // com domínio próprio os callbacks devem apontar para ele, não para uma
-  // URL efêmera do trycloudflare.
-  const baseUrl =
-    getPublicOrigin() || (tunnelUrl ? tunnelUrl.replace(/\/$/, "") : null);
+  const baseUrl = tunnelUrl ? tunnelUrl.replace(/\/$/, "") : null;
 
   return {
     tunnelUrl,
     tunnelStatus,
-    publicBaseUrl: getPublicOrigin(),
-    oauthCallbackUrl: baseUrl ? `${baseUrl}${BP}/api/auth/ml/callback` : null,
-    notificationsCallbackUrl: baseUrl ? `${baseUrl}${BP}/api/ml/notifications` : null,
-    shopeeCallbackUrl: baseUrl ? `${baseUrl}${BP}/api/auth/shopee/callback` : null,
+    oauthCallbackUrl: baseUrl ? `${baseUrl}/api/auth/ml/callback` : null,
+    notificationsCallbackUrl: baseUrl ? `${baseUrl}/api/ml/notifications` : null,
+    shopeeCallbackUrl: baseUrl ? `${baseUrl}/api/auth/shopee/callback` : null,
   };
 }
 
