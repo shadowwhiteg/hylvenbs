@@ -8,7 +8,7 @@ export async function GET(
   const { id } = await params;
   const result = await listItemPromotions(id);
   if (!result.ok) {
-    return NextResponse.json({ error: result.error, promotions: [] }, { status: 200 });
+    return NextResponse.json({ error: result.error, promotions: [] }, { status: 400 });
   }
   return NextResponse.json({ promotions: result.promotions });
 }

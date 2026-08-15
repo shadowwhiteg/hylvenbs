@@ -90,7 +90,7 @@ export function createOpenAiCompatibleProvider(config: OpenAiCompatibleConfig): 
       });
 
       const raw = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      if (!res.ok || (raw && typeof raw === "object" && "error" in raw)) {
         throw new Error(`${config.label}: ${extractErrorDetail(raw, res.status)}`);
       }
 
@@ -128,8 +128,10 @@ export function createOpenAiCompatibleProvider(config: OpenAiCompatibleConfig): 
             ...(config.extraHeaders || {}),
           },
         });
-        if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
         const data = await res.json().catch(() => ({}));
+        if (!res.ok || (data && typeof data === "object" && "error" in data)) {
+          return { ok: false, error: extractErrorDetail(data, res.status) };
+        }
         const models = Array.isArray((data as { data?: Array<{ id: string }> }).data)
           ? (data as { data: Array<{ id: string }> }).data.map((m) => m.id)
           : undefined;
