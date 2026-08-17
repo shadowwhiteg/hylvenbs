@@ -1,0 +1,507 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Usuário cadastrado por um administrador — sem auto-cadastro (RQ-AUTH-*).
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  name         String
+  /// Formato: scrypt$N=<n>,r=<r>,p=<p>$<sal-b64>$<hash-b64>. Ver RQ-AUTH-13.
+  passwordHash String
+  /// "admin" | "editor" | "viewer"
+  role         String  @default("viewer")
+  /// "active" | "disabled"
+  status       String  @default("active")
+  mustChangePassword Boolean @default(true)
+
+  failedLoginCount Int       @default(0)
+  lockedUntil      DateTime?
+  lastLoginAt      DateTime?
+
+  createdById  String?
+  createdBy    User?   @relation("UserCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers User[]  @relation("UserCreator")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions  Session[]
+  apiTokens ApiToken[]
+  auditLogs AuditLog[]
+  runs      Run[]
+
+  @@index([status])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// SHA-256 do token de sessão. O token em si só existe no cookie do cliente.
+  tokenHash String   @unique
+  expiresAt DateTime
+  lastSeenAt DateTime @default(now())
+  userAgent String?
+  ip        String?
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model ApiToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  /// Primeiros 8 caracteres, exibidos na UI para identificar o token.
+  prefix    String
+  /// SHA-256 do token completo. Ver RQ-AUTH-09.
+  tokenHash String   @unique
+  expiresAt DateTime?
+  lastUsedAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  /// Ex.: "auth.login", "user.created", "secret.updated"
+  action     String
+  /// "user" | "provider" | "mcpServer" | "agent" | "run" | "apiToken"
+  targetType String
+  targetId   String?
+  /// JSON com contexto — nunca contém segredo (RQ-SEC-09).
+  metadata   String   @default("{}")
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+}
+
+/// Provedor de LLM (Anthropic, OpenAI, ou qualquer endpoint compatível).
+model Provider {
+  id        String   @id @default(cuid())
+  name      String
+  /// "anthropic" | "openai" | "openai-compatible"
+  kind      String
+  baseUrl   String?
+  /// Envelope cifrado "v<versão>:<iv>:<tag>:<ciphertext>". Ver src/lib/crypto/secrets.ts.
+  apiKeyEnc String?
+  /// Modelos disponíveis, JSON: string[]
+  models    String   @default("[]")
+  enabled   Boolean  @default(true)
+  createdById String?
+  updatedById String?
+  /// Exclusão lógica: versões de fluxo publicadas continuam íntegras (RQ-VER-11).
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agents     Agent[]
+  candidates ModelCandidate[]
+
+  @@index([deletedAt])
+}
+
+/// Política reutilizável de roteamento de modelos (design 007, RQ-ROT-02).
+model ModelPolicy {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String  @default("")
+  enabled     Boolean @default(true)
+
+  createdById String?
+  updatedById String?
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  candidates ModelCandidate[]
+  agents     Agent[]
+
+  @@index([deletedAt])
+}
+
+/// Candidato ordenado de uma cadeia de roteamento. Pertence a uma política OU a um
+/// agente (sobrescrita, RQ-ROT-03) — nunca aos dois; a restrição é de aplicação.
+model ModelCandidate {
+  id String @id @default(cuid())
+
+  policyId String?
+  policy   ModelPolicy? @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  agentId String?
+  agent   Agent?  @relation("AgentCandidates", fields: [agentId], references: [id], onDelete: Cascade)
+
+  /// Tipo de tarefa — taxonomia aberta; "default" é a cadeia usada quando nada casa.
+  taskType String @default("default")
+  /// Ordem de preferência dentro de (escopo, taskType). Menor = tentado primeiro.
+  rank     Int    @default(0)
+
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  model      String
+
+  /// Overrides opcionais dos parâmetros do agente para este candidato.
+  maxTokens   Int?
+  temperature Float?
+
+  enabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([policyId, taskType, rank])
+  @@index([agentId, taskType, rank])
+}
+
+/// Saúde observada por par (provedor, modelo) — base da ordenação por disponibilidade
+/// (RQ-ROT-08). Nunca remove um candidato, só o desprioriza enquanto a carência dura.
+model ModelHealth {
+  id         String @id @default(cuid())
+  providerId String
+  model      String
+
+  consecutiveFailures Int       @default(0)
+  lastErrorType       String?
+  lastErrorMessage    String?
+  lastErrorAt         DateTime?
+  lastOkAt            DateTime?
+  /// Enquanto no futuro, o candidato é tentado por último.
+  cooldownUntil       DateTime?
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, model])
+  @@index([cooldownUntil])
+}
+
+/// Servidor MCP (stdio ou HTTP streamable).
+model McpServer {
+  id        String   @id @default(cuid())
+  name      String
+  /// "stdio" | "http"
+  transport String   @default("stdio")
+  command   String?
+  /// JSON: string[]
+  args      String   @default("[]")
+  /// Envelope cifrado do JSON Record<string,string> de variáveis de ambiente.
+  envEnc    String?
+  /// Nomes das variáveis, em claro, JSON: string[] — usados pela UI e pelo configHash.
+  envKeys   String   @default("[]")
+  url       String?
+  /// Envelope cifrado do JSON Record<string,string> de headers HTTP.
+  headersEnc String?
+  /// Nomes dos headers, em claro, JSON: string[].
+  headerKeys String  @default("[]")
+  enabled   Boolean  @default(true)
+  /// Última introspecção bem-sucedida. JSON: McpTool[]
+  toolsCache String  @default("[]")
+  lastStatus String? // "ok" | "error"
+  lastError  String?
+  lastCheckedAt DateTime?
+  /// SHA-256 de {transport, command, args, url, envKeys, headerKeys} — detecta drift.
+  configHash String  @default("")
+  createdById String?
+  updatedById String?
+  /// Exclusão lógica: versões de fluxo publicadas continuam íntegras (RQ-VER-11).
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bindings AgentMcpServer[]
+
+  @@index([deletedAt])
+}
+
+/// Agente. Um agente com role="orchestrator" pode delegar para subagentes.
+model Agent {
+  id           String  @id @default(cuid())
+  name         String
+  description  String  @default("")
+  /// "orchestrator" | "subagent"
+  role         String  @default("subagent")
+  systemPrompt String  @default("")
+
+  providerId String?
+  provider   Provider? @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  /// Modelo único — vira o último candidato da cadeia de roteamento (RQ-ROT-12).
+  model      String    @default("")
+
+  /// Política de roteamento à qual este agente adere (design 007, RQ-ROT-02).
+  modelPolicyId String?
+  modelPolicy   ModelPolicy? @relation(fields: [modelPolicyId], references: [id], onDelete: SetNull)
+  /// Tipo de tarefa padrão das execuções deste agente (RQ-ROT-04).
+  taskType      String       @default("default")
+
+  temperature Float  @default(0.7)
+  maxTokens   Int    @default(2048)
+  topP        Float  @default(1)
+  /// Só aplicado quando > 0 (Anthropic top_k / compatíveis).
+  topK        Int    @default(0)
+  stopSequences String @default("[]")
+  maxSteps    Int    @default(12)
+
+  enabled   Boolean  @default(true)
+
+  /// Fluxo ao qual este agente pertence. Nulo = agente avulso, ainda não agrupado (RQ-VER-01).
+  flowId String?
+  flow   Flow?   @relation(fields: [flowId], references: [id], onDelete: SetNull)
+
+  createdById String?
+  updatedById String?
+  /// Exclusão lógica: versões de fluxo publicadas continuam íntegras (RQ-VER-11).
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mcpServers  AgentMcpServer[]
+  /// Sobrescrita de roteamento deste agente (RQ-ROT-03).
+  candidates  ModelCandidate[] @relation("AgentCandidates")
+  /// Subagentes que este orquestrador pode invocar.
+  children    AgentLink[] @relation("parent")
+  parents     AgentLink[] @relation("child")
+  runs        Run[]
+  spans       Span[]
+
+  @@index([flowId])
+  @@index([deletedAt])
+  @@index([modelPolicyId])
+}
+
+/// Agrupa um orquestrador e seu grafo de subagentes como unidade versionável (RQ-VER-01).
+model Flow {
+  id          String @id @default(cuid())
+  name        String
+  slug        String @unique
+  description String @default("")
+
+  /// Orquestrador raiz. O grafo é resolvido a partir dele por travessia em AgentLink.
+  rootAgentId String
+  /// "draft" | "published" | "archived"
+  status      String @default("draft")
+
+  /// Última versão publicada. Nulo enquanto o fluxo nunca foi publicado.
+  currentVersionId String?      @unique
+  currentVersion   FlowVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
+
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agents   Agent[]
+  versions FlowVersion[] @relation("FlowVersions")
+  runs     Run[]
+}
+
+/// Imutável após criado — nenhum caminho da aplicação faz update ou delete aqui (RQ-VER-02).
+model FlowVersion {
+  id      String @id @default(cuid())
+  flowId  String
+  flow    Flow   @relation("FlowVersions", fields: [flowId], references: [id], onDelete: Cascade)
+  version Int
+
+  /// Snapshot completo do grafo (formato em specs/design/002-versionamento-fluxos.md). Sem segredos.
+  snapshot    String
+  /// SHA-256 do snapshot canonicalizado — base da idempotência de publicação (RQ-VER-04).
+  contentHash String
+  message     String  @default("")
+  /// Etiqueta única dentro do fluxo (ex.: "producao"). Ver RQ-VER-12.
+  tag         String?
+
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  runs      Run[]
+  currentOf Flow? @relation("CurrentVersion")
+
+  @@unique([flowId, version])
+  @@unique([flowId, tag])
+  @@index([flowId, createdAt])
+}
+
+/// Ligação orquestrador -> subagente.
+model AgentLink {
+  id       String @id @default(cuid())
+  parentId String
+  childId  String
+  parent   Agent  @relation("parent", fields: [parentId], references: [id], onDelete: Cascade)
+  child    Agent  @relation("child", fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, childId])
+}
+
+model AgentMcpServer {
+  id          String    @id @default(cuid())
+  agentId     String
+  mcpServerId String
+  agent       Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  mcpServer   McpServer @relation(fields: [mcpServerId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, mcpServerId])
+}
+
+model Run {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  flowId        String?
+  flow          Flow?        @relation(fields: [flowId], references: [id], onDelete: SetNull)
+  flowVersionId String?
+  flowVersion   FlowVersion? @relation(fields: [flowVersionId], references: [id], onDelete: SetNull)
+  /// "version" (fixada numa publicação) | "draft" (snapshot efêmero — RQ-VER-06).
+  sourceKind    String       @default("draft")
+  /// Snapshot resolvido no momento do enfileiramento — sempre gravado, fixado ou não (RQ-VER-06).
+  draftSnapshot String?
+  /// Configuração externa (servidor MCP) divergiu do snapshot fixado no momento da execução (RQ-VER-10).
+  configDrift   Boolean      @default(false)
+  driftDetail   String?
+
+  /// Tipo de tarefa pedido na chamada — seleciona a cadeia de roteamento (RQ-ROT-04).
+  taskType      String?
+  /// Alguma chamada precisou cair para um candidato seguinte (RQ-ROT-11).
+  modelFailover Boolean      @default(false)
+
+  triggeredById String?
+  triggeredBy   User?  @relation(fields: [triggeredById], references: [id], onDelete: SetNull)
+  /// Canal de origem da execução (RQ-OAI-11, design 010): "ui" | "api" | "openai".
+  source    String   @default("ui")
+  input     String
+  output    String?
+  /// "queued" | "running" | "succeeded" | "failed" | "cancelled" | "timed_out"
+  status    String   @default("queued")
+  error     String?
+  /// Taxonomia do design 003 — só preenchido quando status = "failed".
+  errorType String?
+  inputTokens  Int   @default(0)
+  outputTokens Int   @default(0)
+  costUsd      Float?
+
+  /// Fila (design 004). queuedAt é a criação; startedAt fica nulo até o primeiro claim.
+  queuedAt      DateTime  @default(now())
+  startedAt     DateTime?
+  endedAt       DateTime?
+  /// Id do processo do worker que detém a run — usado na recuperação após queda.
+  lockedBy      String?
+  lockedAt      DateTime?
+  heartbeatAt   DateTime?
+  attempt       Int       @default(0)
+  maxAttempts   Int       @default(1)
+  /// Quando a próxima tentativa pode ser reclamada (backoff de retentativa).
+  nextAttemptAt DateTime?
+  priority      Int       @default(0)
+  timeoutMs     Int       @default(600000)
+  cancelRequestedAt DateTime?
+  /// Chave de idempotência opcional do cliente — RQ-ASY-10.
+  idempotencyKey String? @unique
+
+  spans Span[]
+  logs  LogEntry[]
+
+  @@index([agentId, startedAt])
+  @@index([status, priority, queuedAt])
+  @@index([flowId, startedAt])
+}
+
+/// Unidade de duração da árvore de execução (agente, modelo, tool, delegação, conexão MCP).
+model Span {
+  id    String @id @default(cuid())
+  runId String
+  run   Run    @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  /// Identificadores de tracing (hex). traceId = um por run.
+  traceId      String
+  spanId       String  @unique
+  parentSpanId String?
+
+  /// "agent" | "model" | "tool" | "delegate" | "mcp.connect"
+  kind String
+  name String
+
+  agentId String?
+  agent   Agent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  /// "running" | "ok" | "error" | "cancelled"
+  status       String  @default("running")
+  errorType    String?
+  errorMessage String?
+
+  /// Atributos gen_ai.* e específicos do domínio, JSON. Segredos mascarados (RQ-SEC-08).
+  attributes String @default("{}")
+
+  inputTokens  Int    @default(0)
+  outputTokens Int    @default(0)
+  costUsd      Float?
+
+  /// Ordem de emissão dentro da run; resolve empates de timestamp e serve de cursor.
+  seq        Int
+  depth      Int      @default(0)
+  startedAt  DateTime @default(now())
+  endedAt    DateTime?
+  durationMs Int?
+
+  logs LogEntry[]
+
+  @@index([runId, seq])
+  @@index([traceId])
+  @@index([parentSpanId])
+  @@index([status, errorType])
+}
+
+model LogEntry {
+  id     String  @id @default(cuid())
+  runId  String
+  run    Run     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  spanId String?
+  span   Span?   @relation(fields: [spanId], references: [spanId], onDelete: SetNull)
+
+  /// "debug" | "info" | "warn" | "error"
+  level     String
+  message   String
+  errorType String?
+  /// Contexto estruturado (args da tool, status HTTP, corpo truncado). Mascarado.
+  payload   String @default("{}")
+
+  /// Monotônico por run — cursor de paginação/streaming.
+  seq       Int
+  createdAt DateTime @default(now())
+
+  @@index([runId, seq])
+  @@index([runId, level])
+}
+
+/// Chave-valor para ajustes editáveis pela UI (retenção, concorrência, preços…).
+model Setting {
+  key       String   @id
+  value     String
+  updatedById String?
+  updatedAt DateTime @updatedAt
+}
+
+/// Preço por milhão de tokens, por modelo — base do custo estimado de execução.
+model ModelPrice {
+  id            String   @id @default(cuid())
+  providerKind  String
+  model         String
+  inputPerMTok  Float
+  outputPerMTok Float
+  currency      String   @default("USD")
+  updatedAt     DateTime @updatedAt
+
+  @@unique([providerKind, model])
+}

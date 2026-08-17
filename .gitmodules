@@ -1,0 +1,3 @@
+[submodule "stoat-chat/for-web"]
+	path = stoat-chat/for-web
+	url = https://github.com/stoatchat/for-web
