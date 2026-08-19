@@ -1,9 +1,9 @@
 [submodule "stoat-chat/for-web"]
 	path = stoat-chat/for-web
-	url = https://github.com/stoatchat/for-web
+	url = https://github.com/shadowwhiteg/for-web
 [submodule "stoat-chat/self-hosted"]
 	path = stoat-chat/self-hosted
-	url = https://github.com/stoatchat/self-hosted
+	url = https://github.com/shadowwhiteg/self-hosted
 [submodule "stoat-chat/remix-bot"]
 	path = stoat-chat/remix-bot
 	url = https://github.com/remix-bot/stoat.git
